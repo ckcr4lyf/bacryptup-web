@@ -1,0 +1,75 @@
+body {
+    background-color: #0D0208;
+    color: #00FF41;
+    font-family: "Lucida Console", Monaco, monospace;
+}
+
+.container {
+    width: 30%;
+    margin: auto;
+    text-align: center;
+}
+
+table {
+    margin: auto;
+}
+
+input {
+    background-color: #0D0208;
+    color: #00FF41;
+    border-color: #00FF41;
+    font-family: "Lucida Console", Monaco, monospace;
+    padding: 4px;
+}
+
+td {
+    width: 50%;
+}
+
+.btnTd {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.encBtn {
+    width: 50%;
+    margin: auto;
+    margin-top: 40px;
+    background-color: #0D0208;
+    color: #00FF41;
+    font-family: "Lucida Console", Monaco, monospace;
+    padding: 6px 10px 6px 10px;
+    border-width: 1px;
+    border-color: #00FF41;
+}
+
+.fi {
+    display: none;
+}
+
+.tm {
+    margin-top: 180px;
+}
+
+.dm {
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.fileLabel {
+    font-size: 0.8em;
+}
+
+#status {
+    display: inline-block;
+    margin-top: 20px;
+}
+
+#status-dl {
+    display: inline-block;
+    margin-top: 20px;
+}
+
+.small {
+    font-size: 0.8em;
+}

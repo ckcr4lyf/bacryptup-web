@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" -->
+        <!-- integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
+    <title>Bacryptup Beta</title>
+</head>
+
+<body>
+    <div class="container tm">
+        <h1>Upload file</h1>
+        <table>
+            <tr>
+                <td>Access Token</td>
+                <td><input type="text" name="accessToken" id="accessToken"></td>
+            </tr>
+            <tr>
+                <td>Password</td>
+                <td><input type="password" name="password-enc" id="password-enc"></td>
+            </tr>
+            <tr>
+                <td>File <span class="small">(limit 10MB)</span></td>
+                <td><label for="theFile" class="fileLabel" id="fileLabel"><span id="fileText">[click to select]</span><input type="file" name="theFile" id="theFile" class="fi"></label></td>
+            </tr>
+            <tr>
+                <td colspan="2" class="btnTd"><button type="button" onclick="encryptFile()" class="encBtn">Upload</button></td>
+            </tr>
+            <tr>
+                <td colspan="2"><span id="status"></span></td>
+            </tr>
+        </table>
+    </div>
+    <div class="container dm">
+---OR---
+    </div>
+
+    <div class="container">
+        <h1>Download file</h1>
+        <table>
+            <tr>
+                <td>File ID</td>
+                <td><input type="text" name="fileId" id="fileId"></td>
+            </tr>
+            <tr>
+                <td>Password</td>
+                <td><input type="password" name="password" id="password"></td>
+            </tr>
+            <tr>
+                <td colspan="2" class="btnTd"><button type="button" class="encBtn" onclick="dlfile()">Download</button></td>
+            </tr>
+            <tr>
+                <td colspan="2"><span id="status-dl"></span></td>
+            </tr>
+        </table>
+    </div>
+    <script src="bundle.js"></script>
+</body>
+
+</html>
