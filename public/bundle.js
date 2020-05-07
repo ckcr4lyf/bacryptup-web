@@ -24035,6 +24035,7 @@ module.exports = {
 (function (Buffer){
 const axios = require('axios');
 const crypto = require('crypto');
+const ENDPOINT = "http://localhost:3000/v1/";
 
 let dlfile = () => {
     var id = document.getElementById('fileId').value;
@@ -24050,10 +24051,15 @@ let dlfile = () => {
         dlstatus.innerText = msg;
     }
 
+    if (id == "" || password == ""){
+        dlstatus.innerText = "Missing parameters...";
+        return;
+    }
+
     var downloadSpin = setInterval(downloadMsg, 250);
 
 
-    axios.get("https://bacryptup.saxrag.com/v1/file/" + id).then((response) => {
+    axios.get(ENDPOINT + "file/" + id).then((response) => {
         let key = crypto.pbkdf2Sync(password, "BACRYPTUP", 1000, 32, 'sha256');
         let iv_base64 = response.data.doc.iv;
         let iv = Buffer.from(iv_base64, 'base64');
@@ -24070,13 +24076,14 @@ let dlfile = () => {
             let enc_buffer = Buffer.from(response.data);
             let dbufs = [];
             let decrypted = null;
+            clearInterval(downloadSpin);
+            dlstatus.innerText = "Decrypting...";
 
             try {
                 dbufs.push(decipher.update(enc_buffer));
                 dbufs.push(decipher.final());
                 decrypted = Buffer.concat(dbufs);
             } catch (err) {
-                clearInterval(downloadSpin);
                 dlstatus.innerText = "Decryption failed";
                 return;
             }
@@ -24086,7 +24093,6 @@ let dlfile = () => {
             link.href = window.URL.createObjectURL(blob);
             link.download = fileName;
             link.click();
-            clearInterval(downloadSpin);
             dlstatus.innerText = "";
 
         }).catch(error => {
@@ -24100,6 +24106,7 @@ let dlfile = () => {
 }
 
 let encryptFile = () => {
+
     let inputFile = document.getElementById('theFile').files[0];
     let accessToken = document.getElementById('accessToken').value;
     let password = document.getElementById('password-enc').value;
@@ -24107,23 +24114,15 @@ let encryptFile = () => {
     var statusEl = document.getElementById("status");
     var spinner = ['/', '-', '\\', '|'];
     var count = 0;
-    var upload_limit = 1024 * 1024 * 10;
+    // var upload_limit = 1024 * 1024 * 150;
+    var uploadSpin;
+    var encryptSpin;
 
-    if (!inputFile) {
-        statusEl.innerText = "No file.";
-    }
-
-    if (!accessToken || accessToken == "") {
-        statusEl.innerText = "No access token."
-    }
-
-    if (!password || password == "") {
-        statusEl.innerText = "No password."
-    }
-
-    if (inputFile.size > upload_limit) {
-        statusEl.innerText = "File too large.";
-        return;
+    function encryptMsg() {
+        var msg = "Encrypting " + spinner[count % 4];
+        count++;
+        statusEl.innerText = msg;
+        console.log("In encrypt interval - msg", msg);
     }
 
     function uploadMsg() {
@@ -24132,10 +24131,23 @@ let encryptFile = () => {
         statusEl.innerText = msg;
     }
 
-    var uploadSpin = setInterval(uploadMsg, 250);
+    if (!inputFile) {
+        statusEl.innerText = "No file.";
+        return;
+    }
+
+    if (anon != true && (!accessToken || accessToken == "")) {
+        statusEl.innerText = "No access token."
+        return;
+    }
+
+    if (!password || password == "") {
+        statusEl.innerText = "No password."
+        return;
+    }
 
     fileReader.onloadstart = () => {
-        console.log("Starting to load file...");
+        statusEl.innerHTML = "Encrypting..."
     }
 
     fileReader.onload = () => {
@@ -24143,20 +24155,45 @@ let encryptFile = () => {
         let iv = crypto.randomBytes(16);
         let cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
         let plaintext = new Uint8Array(fileReader.result);
+
+        if (anon == true && plaintext.length > tenmb){
+            statusEl.innerHTML = "Size limit exceeded.";
+            return;
+        } else if (plaintext.length > tenmb * 10){
+            statusEl.innerHTML = "Size limit exceeded.";
+            return;
+        }
+
+        encryptSpin = setInterval(encryptMsg, 250);
         let segments = [];
         segments.push(cipher.update(plaintext));
         segments.push(cipher.final());
         let ciphertext = Buffer.concat(segments);
+        clearInterval(encryptSpin);
+        uploadSpin = setInterval(uploadMsg, 250);
+        let onehour = 1000 * 60 * 60; //1hr
+        let dtime = onehour;
+
+        if (document.querySelector("#day").checked == true){
+            dtime = onehour * 24;
+        }
+
+        let headers = {
+            'content-type': 'application/octet-stream',
+            'filename': inputFile.name,
+            'x-iv': iv.toString('base64'),
+            "x-original-size": ciphertext.length,
+            'x-expiry': dtime.toString()
+        }
+
+        if (anon != true){
+            headers['x-access-token'] = accessToken;
+        }
 
         axios({
-            url: "https://bacryptup.saxrag.com/v1/stream/",
+            url: ENDPOINT + "stream/",
             method: 'post',
-            headers: {
-                'content-type': 'application/octet-stream',
-                'filename': inputFile.name,
-                'x-access-token': accessToken,
-                'x-iv': iv.toString('base64')
-            },
+            headers: headers,
             data: ciphertext
         }).then((response) => {
 
@@ -24165,15 +24202,21 @@ let encryptFile = () => {
                 let fileId = response.data.fileId;
                 let message = "Upload Complete. File ID: " + fileId;
                 statusEl.innerText = message;
+                getQuota();
             } else {
                 statusEl.innerText = "Upload failed. Code " + response.status;
             }
         }).catch((error) => {
             clearInterval(uploadSpin);
-            statusEl.innerText = "Upload failed. Code " + error.response.status;
+            if (error.response){
+                statusEl.innerText = "Upload failed. Code " + error.response.status;
+            } else {
+                statusEl.innerText = "Upload failed. The server did not respond.";
+            }
         })
     }
 
+    //Thanks to shdv of hat.sh for the help on frontend file buffering! I'm more of a server side guy 
     fileReader.readAsArrayBuffer(inputFile);
 }
 
@@ -24181,9 +24224,72 @@ var fileEl = document.getElementById('theFile');
 var fileText = document.getElementById('fileText');
 
 fileEl.oninput = (ev) => {
-    fileText.innerText = fileEl.files[0].name;
+    let fname = fileEl.files[0].name;
+
+    if (fname.length > 20){
+        fname = fname.slice(0, 17) + "...";
+    }
+
+    fileText.innerText = fname;
 }
 
+let getQuota = () => {
+    axios.get(ENDPOINT + "quota").then((response) => {
+        if (response.status == 200){
+            var anonAvail = response.data.anonAvail / (1024 * 1024);
+            anonAvail = anonAvail.toFixed(2);
+            var userAvail = response.data.userAvail / (1024 * 1024);
+            userAvail = userAvail.toFixed(2);
+            document.querySelector("#anonAvail").innerHTML = anonAvail.toString() + " MB";
+            document.querySelector("#userAvail").innerHTML = userAvail.toString() + " MB";
+        } else {
+            document.querySelector("#anonAvail").innerHTML = "error";
+            document.querySelector("#userAvail").innerHTML = "error";
+        }
+    }).catch(err => {
+        document.querySelector("#anonAvail").innerHTML = "error";
+        document.querySelector("#userAvail").innerHTML = "error";
+    });
+}
+
+let deleteFile = () => {
+
+    let accessToken = document.querySelector("#delat");
+    let fileID = document.querySelector("#delid");
+    let delspan = document.querySelector("#delres");
+
+    if (accessToken.value == "" || fileID.value == ""){
+        delspan.innerHTML = "Missing parameters...";
+        return;
+    }
+
+    delspan.innerHTML = "Deleting...";
+
+    headers = {
+        'x-access-token': accessToken.value
+    };
+
+    axios({
+        url: ENDPOINT + 'file/' + fileID.value,
+        method: 'delete',
+        headers: headers
+    }).then(response => {
+        if (response.status == 204){
+            delspan.innerHTML = "Deleted.";
+        } else {
+            delspan.innerHTML = "Error occured when deleting."
+        }
+    }).catch(error => {
+        if (error.response){
+            delspan.innerHTML = "Failed to delete. Error code " + error.response.status;
+        } else {
+            delspan.innerHTML = "Failed to delete. The server did not respond";
+        }
+    });
+}
+
+window.deleteFile = deleteFile;
+window.getQuota = getQuota;
 window.dlfile = dlfile;
 window.encryptFile = encryptFile;
 }).call(this,require("buffer").Buffer)

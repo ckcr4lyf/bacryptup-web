@@ -6,15 +6,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" -->
-        <!-- integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
+    <!-- integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
     <title>Bacryptup Beta</title>
+    <!-- <script src="https://www.google.com/recaptcha/api.js?render=_reCAPTCHA_site_key"></script> -->
 </head>
 
 <body>
+    <div class="modal" id="modal">
+        <div class="modal-content" id="instructions">
+            <p>
+                Bacryptup is an end-to-end encrypted file sharing service
+            </p>
+            <p>
+                You can upload files either anonymously (limit 10MB per file) or with an access token (limit 100MB per
+                file) <br />
+                If you have an access token, your total limit is 200MB "storage" <br />
+                Files uploaded are deleted after a set time in the free plans (paid plans tba)
+            </p>
+            <p>
+                Steps to upload:
+                <ul>
+                    <li>Choose anonymous or with an access token</li>
+                    <li>Enter access token if applicable</li>
+                    <li>Enter password to encrypt with (IMP: If you forget this, you will not be able to decrypt your file)</li>
+                    <li>Choose the file to upload (max sure it is in the size limit)</li>
+                    <li>Click upload!</li>
+                </ul>
+                You must take a note of the FileID that is returned to you. The FileID alone <i>cannot</i> be used to decrypt the file. The correct password must be specified as well. <br />
+                There is no "link" to share files - this is intentional. Additionally, it is recommended to communicate the FileID and password over seprate channels.
+            </p>
+            <ul>
+                <li>Anonymous files are deleted within 1 hour as of now</li>
+                <li>"User" files (uploaded with an access token) are deleted after 24 hours</li>
+                <li>"User" files may be explicitly deleted by the uploader before 24 hours, by specifying the FileID AND
+                    access token</li>
+            </ul>
+            <p>
+                The total combined anonymous storage limit is 2GB (as of now). If this is full, you must wait till files
+                are deleted <br />
+                The total combined free user storage limit is 20GB (as of now). If this is full, you must wait till
+                files are deleted <br />
+                Paid plans with dedicated storage will be announced soon.
+            </p>
+            <p>
+                IMPORTANT: Restrictions are only placed on upload (access token / other plans). The downloader ONLY
+                needs the FileID & Decryption Password, not the access token or anything else.
+            </p>
+            <p>
+                [click anywhere to close]
+            </p>
+        </div>
+        <div class="modal-content" id="works">
+            <p>
+                Bacryptup uses end to end encryption to ensure no one can read / view the content of the files you
+                upload.
+                The password you enter is used to encrypt the files so that the server does not know the contents.
+                Read on to know the exact steps that occur
+            </p>
+            <ul>
+                <li>The password is converted into a AES-256bit key (and corresponding IV) using a Password-based key
+                    derivation function</li>
+                <li>The file is encrypted (in the browser) with this key</li>
+                <li>The encrypted file and the IV is sent to the server, where the file is stored</li>
+                <li>The serer returns a fileID to use to retireve the file at a later time</li>
+            </ul>
+            <p>
+                The password is NEVER sent to the server. Without this the server cannot decrypt or know what the file
+                contents are. The fileID alone cannot be used to download and view the decrypted file, the correct
+                password is necessary.
+            </p>
+            <p>
+                [click anywhere to close]
+            </p>
+        </div>
+        <div class="modal-content" id="why">
+            <p>
+                It seems, as we make more progress and technological advances, privacy online is reducing. Companies try
+                and harvest as much data as possible, often going as far as reading private messages (Facebook Messenger
+                was one to do this).
+                Sharing files online has always been either risky or inconvenient.
+            </p>
+            <p>
+                Those quick anonymous upload websites work - but who knows what they do with your files? It's fine if
+                maybe you want to share an mp3 or something (Dont though - its illegal).
+                But if its something sensitive - such as an admission letter, or bank receipt, those websites could
+                easily grab that data, even if they claim to "delete it" after 'x' time.
+            </p>
+            <p>
+                You could use a more "established" service - such as Google Drive, One Drive or just emailing. However,
+                these options still don't actually encrypt the file - it may be safe from random people, though it
+                Google (and other) still have the ability to view the contents.
+            </p>
+            <p>
+                Bacryptup is different - the files are encrypted <i>in your browser</i> - the server never gets a
+                plaintext copy. Sure, you may think I could just make a copy? Well, even if I did (which I do not), I
+                cannot read the contents, without the password. This is the beauty of end to end encryption.
+                <br /><br />
+                In fact, you can view the source code for the server side logic <a
+                    href="https://github.com/ckcr4lyf/bacryptup-server">here.</a> (Sorry if it's messy, the codebase
+                hasn't been polished yet.)
+            </p>
+            <p>
+                [click anywhere to close]
+            </p>
+        </div>
+        <div class="modal-content" id="reqst">
+            <p>
+                Bacryptup is in a beta stage. Functionality is not perfect, and uptime is not guaranteed. You've been
+                warned.
+            </p>
+            <p>
+                The "anonymous" version can upload files upto 10MB and uses the shared space of total 2GB. If you use an
+                access token instead, you get the following benefits:
+                <ul>
+                    <li>100MB single file limit</li>
+                    <li>20GB shared space</li>
+                    <li>200MB storage limit per user / access token</li>
+                </ul>
+            </p>
+            <p>
+                Having an access token is mostly useful to share slightly larger files, rather than anonymous mode.
+                Higher volume plans may be introduced later.
+            </p>
+            <p>
+                If you're interested in getting an access token, <a
+                    href="https://join.slack.com/t/bacryptup/shared_invite/zt-e3u9lgzo-1HfIDMoFjFUK0kR13QtOBQ">join our
+                    Slack</a> and ask for one in #request-token
+            </p>
+        </div>
+        <div id="delfile" class="modal-content">
+            <table>
+                <tr>
+                    <td>Access token</td>
+                    <td><input type="text" name="delat" id="delat"></td>
+                </tr>
+                <tr>
+                    <td>FileID</td>
+                    <td><input type="text" name="delid" id="delid"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="btnTd"><button type="button" id="delbtn" class="encBtn" onclick="deleteFile()">Delete</button></td>
+                </tr>
+                <tr class="center">
+                    <td colspan="2"><span id="delres"></span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
     <div class="container tm">
         <h1>Upload file</h1>
         <table>
-            <tr>
+            <tr class="anonrow">
+                <td>Anonymous?</td>
+                <td><label class="lcontainer"><input type="radio" checked="true" name="anon" id="yes" onchange="checkAnon()"><span class="checkmark"></span>Yes</label><label class="lcontainer"><input type="radio" name="anon" id="no" onchange="checkAnon()"><span class="checkmark"></span>No </label></td>
+            </tr>
+            <tr id="accessrow">
                 <td>Access Token</td>
                 <td><input type="text" name="accessToken" id="accessToken"></td>
             </tr>
@@ -23,19 +169,31 @@
                 <td><input type="password" name="password-enc" id="password-enc"></td>
             </tr>
             <tr>
-                <td>File <span class="small">(limit 10MB)</span></td>
-                <td><label for="theFile" class="fileLabel" id="fileLabel"><span id="fileText">[click to select]</span><input type="file" name="theFile" id="theFile" class="fi"></label></td>
+                <td>File <span class="small">(limit <span id="limit">10</span>MB)</span></td>
+                <td><label for="theFile" class="fileLabel" id="fileLabel"><span id="fileText">[click to
+                            select]</span><input type="file" name="theFile" id="theFile" class="fi"></label></td>
+            </tr>
+            <tr class="anonrow">
+                <td>Delete in</td>
+                <td>
+                    <label class="lcontainer"><input type="radio" checked="true" name="dtime" id="hour" ><span class="checkmark"></span>1 hour</label><label class="lcontainer"><input type="radio" name="dtime" id="day" ><span class="checkmark"></span>1 day </label>
+                </td>
             </tr>
             <tr>
-                <td colspan="2" class="btnTd"><button type="button" onclick="encryptFile()" class="encBtn">Upload</button></td>
+                <td colspan="2" class="btnTd"><button type="button" onclick="encryptFile()"
+                        class="encBtn">Upload</button></td>
             </tr>
             <tr>
                 <td colspan="2"><span id="status"></span></td>
             </tr>
         </table>
+        <p>
+            Anonymous Space Available: <span id="anonAvail"></span><br />
+            User Space Available: <span id="userAvail"></span>
+        </p>
     </div>
     <div class="container dm">
----OR---
+        ---OR---
     </div>
 
     <div class="container">
@@ -50,14 +208,34 @@
                 <td><input type="password" name="password" id="password"></td>
             </tr>
             <tr>
-                <td colspan="2" class="btnTd"><button type="button" class="encBtn" onclick="dlfile()">Download</button></td>
+                <td colspan="2" class="btnTd"><button type="button" class="encBtn" onclick="dlfile()">Download</button>
+                </td>
             </tr>
             <tr>
                 <td colspan="2"><span id="status-dl"></span></td>
             </tr>
         </table>
     </div>
+    <div class="container donate">
+        <span class="ds">Donate</span>
+        <ul style="list-style-type:none;" class="dsl">
+            <li>BTC: 3FvjVvSaihUvLHzatJ4MAvrKdtZQEbJhS1</li>
+            <li>ETH: 0x865fEC58a2d98f44d7253A1d5cE18b40fb124462</li>
+            <li>BCH: qqgvak0004cj9g9p2fqcz0s8q8384s8mecq88swgpe</li>
+            <li>ZEC: t1K9grYE1ZkQF9ftmowo3ejJZadpxKg9zn9</li>
+            <li>XMR: 45W6pWE6Euu7VvcDmbvyiMJCEASA3BTXc8JepTcvXEkeWPHnfr5pL1uNLhfZL1c3KoWPrwqgri7YnM7y3ckxdTU91bNEDbb
+            </li>
+        </ul>
+    </div>
+    <div class="container bottom">
+        <span class="link" id="ins-link">Instructions</span> |
+        <span class="link" id="works-link">How</span> |
+        <span class="link" id="why-link">Why</span> |
+        <span class="link" id="request-link">Request Token</span> |
+        <span class="link" id="del-link">Delete</span>
+    </div>
     <script src="bundle.js"></script>
+    <script src="functions.js"></script>
 </body>
 
 </html>
