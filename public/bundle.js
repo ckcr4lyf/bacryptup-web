@@ -24035,7 +24035,8 @@ module.exports = {
 (function (Buffer){
 const axios = require('axios');
 const crypto = require('crypto');
-const ENDPOINT = "http://localhost:3000/v1/";
+// const ENDPOINT = "http://localhost:3000/v1/";
+const ENDPOINT = "https://bacryptup.saxrag.com/v1/";
 
 let dlfile = () => {
     var id = document.getElementById('fileId').value;
