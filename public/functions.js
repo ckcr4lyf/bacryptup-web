@@ -12,21 +12,21 @@ var instructions = {
 
 tabs.push(instructions);
 
-var works = {
-    element: document.getElementById("works"),
-    name: "works",
-    span: document.getElementById("works-link")
-};
+// var works = {
+//     element: document.getElementById("works"),
+//     name: "works",
+//     span: document.getElementById("works-link")
+// };
 
-tabs.push(works);
+// tabs.push(works);
 
-var why = {
-    element: document.getElementById("why"),
-    name: "why",
-    span: document.getElementById("why-link")
-};
+// var why = {
+//     element: document.getElementById("why"),
+//     name: "why",
+//     span: document.getElementById("why-link")
+// };
 
-tabs.push(why);
+// tabs.push(why);
 
 var reqst = {
     element: document.getElementById("reqst"),
