@@ -7242,6 +7242,10 @@ module.exports = function xor (a, b) {
 
 var base64 = require('base64-js')
 var ieee754 = require('ieee754')
+var customInspectSymbol =
+  (typeof Symbol === 'function' && typeof Symbol.for === 'function')
+    ? Symbol.for('nodejs.util.inspect.custom')
+    : null
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -7278,7 +7282,9 @@ function typedArraySupport () {
   // Can typed array instances can be augmented?
   try {
     var arr = new Uint8Array(1)
-    arr.__proto__ = { __proto__: Uint8Array.prototype, foo: function () { return 42 } }
+    var proto = { foo: function () { return 42 } }
+    Object.setPrototypeOf(proto, Uint8Array.prototype)
+    Object.setPrototypeOf(arr, proto)
     return arr.foo() === 42
   } catch (e) {
     return false
@@ -7307,7 +7313,7 @@ function createBuffer (length) {
   }
   // Return an augmented `Uint8Array` instance
   var buf = new Uint8Array(length)
-  buf.__proto__ = Buffer.prototype
+  Object.setPrototypeOf(buf, Buffer.prototype)
   return buf
 }
 
@@ -7357,7 +7363,7 @@ function from (value, encodingOrOffset, length) {
   }
 
   if (value == null) {
-    throw TypeError(
+    throw new TypeError(
       'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
       'or Array-like Object. Received type ' + (typeof value)
     )
@@ -7409,8 +7415,8 @@ Buffer.from = function (value, encodingOrOffset, length) {
 
 // Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
 // https://github.com/feross/buffer/pull/148
-Buffer.prototype.__proto__ = Uint8Array.prototype
-Buffer.__proto__ = Uint8Array
+Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype)
+Object.setPrototypeOf(Buffer, Uint8Array)
 
 function assertSize (size) {
   if (typeof size !== 'number') {
@@ -7514,7 +7520,8 @@ function fromArrayBuffer (array, byteOffset, length) {
   }
 
   // Return an augmented `Uint8Array` instance
-  buf.__proto__ = Buffer.prototype
+  Object.setPrototypeOf(buf, Buffer.prototype)
+
   return buf
 }
 
@@ -7836,6 +7843,9 @@ Buffer.prototype.inspect = function inspect () {
   if (this.length > max) str += ' ... '
   return '<Buffer ' + str + '>'
 }
+if (customInspectSymbol) {
+  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect
+}
 
 Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
   if (isInstance(target, Uint8Array)) {
@@ -7961,7 +7971,7 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
         return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
       }
     }
-    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
   }
 
   throw new TypeError('val must be string, number or Buffer')
@@ -8327,7 +8337,8 @@ Buffer.prototype.slice = function slice (start, end) {
 
   var newBuf = this.subarray(start, end)
   // Return an augmented `Uint8Array` instance
-  newBuf.__proto__ = Buffer.prototype
+  Object.setPrototypeOf(newBuf, Buffer.prototype)
+
   return newBuf
 }
 
@@ -8816,6 +8827,8 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
     }
   } else if (typeof val === 'number') {
     val = val & 255
+  } else if (typeof val === 'boolean') {
+    val = Number(val)
   }
 
   // Invalid ranges are not set to a default, so can range check early.
@@ -9824,8 +9837,9 @@ Cipher.prototype._finalDecrypt = function _finalDecrypt() {
 var assert = require('minimalistic-assert');
 var inherits = require('inherits');
 
-var utils = require('./utils');
-var Cipher = require('./cipher');
+var des = require('../des');
+var utils = des.utils;
+var Cipher = des.Cipher;
 
 function DESState() {
   this.tmp = new Array(2);
@@ -9962,14 +9976,15 @@ DES.prototype._decrypt = function _decrypt(state, lStart, rStart, out, off) {
   utils.rip(l, r, out, off);
 };
 
-},{"./cipher":58,"./utils":61,"inherits":99,"minimalistic-assert":104}],60:[function(require,module,exports){
+},{"../des":56,"inherits":99,"minimalistic-assert":104}],60:[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
 var inherits = require('inherits');
 
-var Cipher = require('./cipher');
-var DES = require('./des');
+var des = require('../des');
+var Cipher = des.Cipher;
+var DES = des.DES;
 
 function EDEState(type, key) {
   assert.equal(key.length, 24, 'Invalid key length');
@@ -10018,7 +10033,7 @@ EDE.prototype._update = function _update(inp, inOff, out, outOff) {
 EDE.prototype._pad = DES.prototype._pad;
 EDE.prototype._unpad = DES.prototype._unpad;
 
-},{"./cipher":58,"./des":59,"inherits":99,"minimalistic-assert":104}],61:[function(require,module,exports){
+},{"../des":56,"inherits":99,"minimalistic-assert":104}],61:[function(require,module,exports){
 'use strict';
 
 exports.readUInt32BE = function readUInt32BE(bytes, off) {
@@ -10678,8 +10693,6 @@ function BaseCurve(type, conf) {
   this._wnafT3 = new Array(4);
   this._wnafT4 = new Array(4);
 
-  this._bitLength = this.n ? this.n.bitLength() : 0;
-
   // Generalized Greg Maxwell's trick
   var adjustCount = this.n && this.p.div(this.n);
   if (!adjustCount || adjustCount.cmpn(100) > 0) {
@@ -10703,7 +10716,7 @@ BaseCurve.prototype._fixedNafMul = function _fixedNafMul(p, k) {
   assert(p.precomputed);
   var doubles = p._getDoubles();
 
-  var naf = getNAF(k, 1, this._bitLength);
+  var naf = getNAF(k, 1);
   var I = (1 << (doubles.step + 1)) - (doubles.step % 2 === 0 ? 2 : 1);
   I /= 3;
 
@@ -10740,7 +10753,7 @@ BaseCurve.prototype._wnafMul = function _wnafMul(p, k) {
   var wnd = nafPoints.points;
 
   // Get NAF form
-  var naf = getNAF(k, w, this._bitLength);
+  var naf = getNAF(k, w);
 
   // Add `this`*(N+1) for every w-NAF index
   var acc = this.jpoint(null, null, null);
@@ -10796,8 +10809,8 @@ BaseCurve.prototype._wnafMulAdd = function _wnafMulAdd(defW,
     var a = i - 1;
     var b = i;
     if (wndWidth[a] !== 1 || wndWidth[b] !== 1) {
-      naf[a] = getNAF(coeffs[a], wndWidth[a], this._bitLength);
-      naf[b] = getNAF(coeffs[b], wndWidth[b], this._bitLength);
+      naf[a] = getNAF(coeffs[a], wndWidth[a]);
+      naf[b] = getNAF(coeffs[b], wndWidth[b]);
       max = Math.max(naf[a].length, max);
       max = Math.max(naf[b].length, max);
       continue;
@@ -12073,9 +12086,8 @@ Point.prototype.getY = function getY() {
 
 Point.prototype.mul = function mul(k) {
   k = new BN(k, 16);
-  if (this.isInfinity())
-    return this;
-  else if (this._hasDoubles(k))
+
+  if (this._hasDoubles(k))
     return this.curve._fixedNafMul(this, k);
   else if (this.curve.endo)
     return this.curve._endoWnafMulAdd([ this ], [ k ]);
@@ -14376,17 +14388,14 @@ utils.toHex = minUtils.toHex;
 utils.encode = minUtils.encode;
 
 // Represent num in a w-NAF form
-function getNAF(num, w, bits) {
-  var naf = new Array(Math.max(num.bitLength(), bits) + 1);
-  naf.fill(0);
-
+function getNAF(num, w) {
+  var naf = [];
   var ws = 1 << (w + 1);
   var k = num.clone();
-
-  for (var i = 0; i < naf.length; i++) {
+  while (k.cmpn(1) >= 0) {
     var z;
-    var mod = k.andln(ws - 1);
     if (k.isOdd()) {
+      var mod = k.andln(ws - 1);
       if (mod > (ws >> 1) - 1)
         z = (ws >> 1) - mod;
       else
@@ -14395,9 +14404,13 @@ function getNAF(num, w, bits) {
     } else {
       z = 0;
     }
+    naf.push(z);
 
-    naf[i] = z;
-    k.iushrn(1);
+    // Optimization, shift by word if possible
+    var shift = (k.cmpn(0) !== 0 && k.andln(ws - 1) === 0) ? (w + 1) : 1;
+    for (var i = 1; i < shift; i++)
+      naf.push(0);
+    k.iushrn(shift);
   }
 
   return naf;
@@ -14485,10 +14498,10 @@ utils.intFromLE = intFromLE;
 },{"bn.js":16,"minimalistic-assert":104,"minimalistic-crypto-utils":105}],81:[function(require,module,exports){
 module.exports={
   "_from": "elliptic@^6.0.0",
-  "_id": "elliptic@6.5.2",
+  "_id": "elliptic@6.5.0",
   "_inBundle": false,
-  "_integrity": "sha512-f4x70okzZbIQl/NSRLkI/+tteV/9WqL98zx+SQ69KbXxmVrmjwsNUPn/gYJJ0sHvEak24cZgHIPegRePAtA/xw==",
-  "_location": "/watchify/elliptic",
+  "_integrity": "sha512-eFOJTMyCYb7xtE/caJ6JJu+bhi67WCYNbkGSknu20pmM8Ke/bqOfdnZWxyoGN26JgfxTbXrsCkEw4KheCT/KGg==",
+  "_location": "/browserify/elliptic",
   "_phantomChildren": {},
   "_requested": {
     "type": "range",
@@ -14501,13 +14514,13 @@ module.exports={
     "fetchSpec": "^6.0.0"
   },
   "_requiredBy": [
-    "/watchify/browserify-sign",
-    "/watchify/create-ecdh"
+    "/browserify/browserify-sign",
+    "/browserify/create-ecdh"
   ],
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.2.tgz",
-  "_shasum": "05c5678d7173c049d8ca433552224a495d0e3762",
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.0.tgz",
+  "_shasum": "2b8ed4c891b7de3200e14412a5b8248c7af505ca",
   "_spec": "elliptic@^6.0.0",
-  "_where": "C:\\Users\\user\\AppData\\Roaming\\npm\\node_modules\\watchify\\node_modules\\browserify-sign",
+  "_where": "C:\\Users\\user\\AppData\\Roaming\\npm\\node_modules\\browserify\\node_modules\\browserify-sign",
   "author": {
     "name": "Fedor Indutny",
     "email": "fedor@indutny.com"
@@ -14529,19 +14542,19 @@ module.exports={
   "description": "EC cryptography",
   "devDependencies": {
     "brfs": "^1.4.3",
-    "coveralls": "^3.0.8",
-    "grunt": "^1.0.4",
+    "coveralls": "^2.11.3",
+    "grunt": "^0.4.5",
     "grunt-browserify": "^5.0.0",
     "grunt-cli": "^1.2.0",
     "grunt-contrib-connect": "^1.0.0",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^1.0.1",
     "grunt-mocha-istanbul": "^3.0.1",
-    "grunt-saucelabs": "^9.0.1",
+    "grunt-saucelabs": "^8.6.2",
     "istanbul": "^0.4.2",
-    "jscs": "^3.0.7",
-    "jshint": "^2.10.3",
-    "mocha": "^6.2.2"
+    "jscs": "^2.9.0",
+    "jshint": "^2.6.0",
+    "mocha": "^2.1.0"
   },
   "files": [
     "lib"
@@ -14568,7 +14581,7 @@ module.exports={
     "unit": "istanbul test _mocha --reporter=spec test/index.js",
     "version": "grunt dist && git add dist/"
   },
-  "version": "6.5.2"
+  "version": "6.5.0"
 }
 
 },{}],82:[function(require,module,exports){
@@ -18405,7 +18418,7 @@ var objectKeys = Object.keys || function (obj) {
 module.exports = Duplex;
 
 /*<replacement>*/
-var util = Object.create(require('core-util-is'));
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -18524,7 +18537,7 @@ module.exports = PassThrough;
 var Transform = require('./_stream_transform');
 
 /*<replacement>*/
-var util = Object.create(require('core-util-is'));
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -18607,7 +18620,7 @@ function _isUint8Array(obj) {
 /*</replacement>*/
 
 /*<replacement>*/
-var util = Object.create(require('core-util-is'));
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -19632,7 +19645,7 @@ module.exports = Transform;
 var Duplex = require('./_stream_duplex');
 
 /*<replacement>*/
-var util = Object.create(require('core-util-is'));
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -19844,7 +19857,7 @@ var Duplex;
 Writable.WritableState = WritableState;
 
 /*<replacement>*/
-var util = Object.create(require('core-util-is'));
+var util = require('core-util-is');
 util.inherits = require('inherits');
 /*</replacement>*/
 
@@ -24062,9 +24075,9 @@ let dlfile = () => {
 
     axios.get(ENDPOINT + "file/" + id).then((response) => {
         let key = crypto.pbkdf2Sync(password, "BACRYPTUP", 1000, 32, 'sha256');
-        let iv_base64 = response.data.doc.iv;
+        let iv_base64 = response.data.iv;
         let iv = Buffer.from(iv_base64, 'base64');
-        let fileName = response.data.doc.original_name;
+        let fileName = response.data.originalName;
         let decipher = crypto.createDecipheriv(algo, key, iv);
         let s3_url = response.data.url;
 
@@ -24109,12 +24122,12 @@ let dlfile = () => {
 let encryptFile = () => {
 
     let inputFile = document.getElementById('theFile').files[0];
-    let accessToken = document.getElementById('accessToken').value;
     let password = document.getElementById('password-enc').value;
     let fileReader = new FileReader();
     var statusEl = document.getElementById("status");
     var spinner = ['/', '-', '\\', '|'];
     var count = 0;
+    const sizeLimit = 1024 * 1024 * 25;
     // var upload_limit = 1024 * 1024 * 150;
     var uploadSpin;
     var encryptSpin;
@@ -24137,11 +24150,6 @@ let encryptFile = () => {
         return;
     }
 
-    if (anon != true && (!accessToken || accessToken == "")) {
-        statusEl.innerText = "No access token."
-        return;
-    }
-
     if (!password || password == "") {
         statusEl.innerText = "No password."
         return;
@@ -24157,10 +24165,7 @@ let encryptFile = () => {
         let cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
         let plaintext = new Uint8Array(fileReader.result);
 
-        if (anon == true && plaintext.length > tenmb){
-            statusEl.innerHTML = "Size limit exceeded.";
-            return;
-        } else if (plaintext.length > tenmb * 10){
+        if (plaintext.length > sizeLimit){
             statusEl.innerHTML = "Size limit exceeded.";
             return;
         }
@@ -24181,23 +24186,18 @@ let encryptFile = () => {
 
         let headers = {
             'content-type': 'application/octet-stream',
-            'filename': inputFile.name,
+            'x-filename': inputFile.name,
             'x-iv': iv.toString('base64'),
-            "x-original-size": ciphertext.length,
+            "x-file-size": ciphertext.length,
             'x-expiry': dtime.toString()
         }
 
-        if (anon != true){
-            headers['x-access-token'] = accessToken;
-        }
-
         axios({
-            url: ENDPOINT + "stream/",
+            url: ENDPOINT + "file/",
             method: 'post',
             headers: headers,
             data: ciphertext
         }).then((response) => {
-
             clearInterval(uploadSpin);
             if (response.status == 201) {
                 let fileId = response.data.fileId;
@@ -24237,19 +24237,20 @@ fileEl.oninput = (ev) => {
 let getQuota = () => {
     axios.get(ENDPOINT + "quota").then((response) => {
         if (response.status == 200){
-            var anonAvail = response.data.anonAvail / (1024 * 1024);
-            anonAvail = anonAvail.toFixed(2);
-            var userAvail = response.data.userAvail / (1024 * 1024);
-            userAvail = userAvail.toFixed(2);
-            document.querySelector("#anonAvail").innerHTML = anonAvail.toString() + " MB";
-            document.querySelector("#userAvail").innerHTML = userAvail.toString() + " MB";
+            let available = (response.data.total - response.data.used) / (1024 * 1024);
+            // var anonAvail = response.data.anonAvail / (1024 * 1024);
+            // anonAvail = anonAvail.toFixed(2);
+            // var userAvail = response.data.userAvail / (1024 * 1024);
+            // userAvail = userAvail.toFixed(2);
+            document.querySelector("#spaceAvailable").innerHTML = available.toFixed(2).toString() + " MB";
+            // document.querySelector("#userAvail").innerHTML = userAvail.toString() + " MB";
         } else {
-            document.querySelector("#anonAvail").innerHTML = "error";
-            document.querySelector("#userAvail").innerHTML = "error";
+            document.querySelector("#spaceAvailable").innerHTML = "error";
+            // document.querySelector("#userAvail").innerHTML = "error";
         }
     }).catch(err => {
-        document.querySelector("#anonAvail").innerHTML = "error";
-        document.querySelector("#userAvail").innerHTML = "error";
+        document.querySelector("#spaceAvailable").innerHTML = "error";
+        // document.querySelector("#userAvail").innerHTML = "error";
     });
 }
 

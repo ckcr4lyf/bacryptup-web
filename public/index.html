@@ -132,7 +132,7 @@
                     Slack</a> and ask for one in #request-token
             </p>
         </div>
-        <div id="delfile" class="modal-content">
+        <!-- <div id="delfile" class="modal-content">
             <table>
                 <tr>
                     <td>Access token</td>
@@ -149,25 +149,17 @@
                     <td colspan="2"><span id="delres"></span></td>
                 </tr>
             </table>
-        </div>
+        </div> -->
     </div>
     <div class="container tm">
         <h1>Upload file</h1>
         <table>
-            <tr class="anonrow">
-                <td>Anonymous?</td>
-                <td><label class="lcontainer"><input type="radio" checked="true" name="anon" id="yes" onchange="checkAnon()"><span class="checkmark"></span>Yes</label><label class="lcontainer"><input type="radio" name="anon" id="no" onchange="checkAnon()"><span class="checkmark"></span>No </label></td>
-            </tr>
-            <tr id="accessrow">
-                <td>Access Token</td>
-                <td><input type="text" name="accessToken" id="accessToken"></td>
-            </tr>
             <tr>
-                <td>Password</td>
+                <td>Encryption Password</td>
                 <td><input type="password" name="password-enc" id="password-enc"></td>
             </tr>
             <tr>
-                <td>File <span class="small">(limit <span id="limit">10</span>MB)</span></td>
+                <td>File <span class="small">(limit <span id="limit">25</span>MB)</span></td>
                 <td><label for="theFile" class="fileLabel" id="fileLabel"><span id="fileText">[click to
                             select]</span><input type="file" name="theFile" id="theFile" class="fi"></label></td>
             </tr>
@@ -186,8 +178,8 @@
             </tr>
         </table>
         <p>
-            Anonymous Space Available: <span id="anonAvail"></span><br />
-            User Space Available: <span id="userAvail"></span>
+            Space Available: <span id="spaceAvailable"></span><br />
+            <!-- User Space Available: <span id="userAvail"></span> -->
         </p>
     </div>
     <div class="container dm">

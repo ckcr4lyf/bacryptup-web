@@ -27,9 +27,9 @@ let dlfile = () => {
 
     axios.get(ENDPOINT + "file/" + id).then((response) => {
         let key = crypto.pbkdf2Sync(password, "BACRYPTUP", 1000, 32, 'sha256');
-        let iv_base64 = response.data.doc.iv;
+        let iv_base64 = response.data.iv;
         let iv = Buffer.from(iv_base64, 'base64');
-        let fileName = response.data.doc.original_name;
+        let fileName = response.data.originalName;
         let decipher = crypto.createDecipheriv(algo, key, iv);
         let s3_url = response.data.url;
 
@@ -74,12 +74,12 @@ let dlfile = () => {
 let encryptFile = () => {
 
     let inputFile = document.getElementById('theFile').files[0];
-    let accessToken = document.getElementById('accessToken').value;
     let password = document.getElementById('password-enc').value;
     let fileReader = new FileReader();
     var statusEl = document.getElementById("status");
     var spinner = ['/', '-', '\\', '|'];
     var count = 0;
+    const sizeLimit = 1024 * 1024 * 25;
     // var upload_limit = 1024 * 1024 * 150;
     var uploadSpin;
     var encryptSpin;
@@ -102,11 +102,6 @@ let encryptFile = () => {
         return;
     }
 
-    if (anon != true && (!accessToken || accessToken == "")) {
-        statusEl.innerText = "No access token."
-        return;
-    }
-
     if (!password || password == "") {
         statusEl.innerText = "No password."
         return;
@@ -122,10 +117,7 @@ let encryptFile = () => {
         let cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
         let plaintext = new Uint8Array(fileReader.result);
 
-        if (anon == true && plaintext.length > tenmb){
-            statusEl.innerHTML = "Size limit exceeded.";
-            return;
-        } else if (plaintext.length > tenmb * 10){
+        if (plaintext.length > sizeLimit){
             statusEl.innerHTML = "Size limit exceeded.";
             return;
         }
@@ -146,23 +138,18 @@ let encryptFile = () => {
 
         let headers = {
             'content-type': 'application/octet-stream',
-            'filename': inputFile.name,
+            'x-filename': inputFile.name,
             'x-iv': iv.toString('base64'),
-            "x-original-size": ciphertext.length,
+            "x-file-size": ciphertext.length,
             'x-expiry': dtime.toString()
         }
 
-        if (anon != true){
-            headers['x-access-token'] = accessToken;
-        }
-
         axios({
-            url: ENDPOINT + "stream/",
+            url: ENDPOINT + "file/",
             method: 'post',
             headers: headers,
             data: ciphertext
         }).then((response) => {
-
             clearInterval(uploadSpin);
             if (response.status == 201) {
                 let fileId = response.data.fileId;
@@ -202,19 +189,20 @@ fileEl.oninput = (ev) => {
 let getQuota = () => {
     axios.get(ENDPOINT + "quota").then((response) => {
         if (response.status == 200){
-            var anonAvail = response.data.anonAvail / (1024 * 1024);
-            anonAvail = anonAvail.toFixed(2);
-            var userAvail = response.data.userAvail / (1024 * 1024);
-            userAvail = userAvail.toFixed(2);
-            document.querySelector("#anonAvail").innerHTML = anonAvail.toString() + " MB";
-            document.querySelector("#userAvail").innerHTML = userAvail.toString() + " MB";
+            let available = (response.data.total - response.data.used) / (1024 * 1024);
+            // var anonAvail = response.data.anonAvail / (1024 * 1024);
+            // anonAvail = anonAvail.toFixed(2);
+            // var userAvail = response.data.userAvail / (1024 * 1024);
+            // userAvail = userAvail.toFixed(2);
+            document.querySelector("#spaceAvailable").innerHTML = available.toFixed(2).toString() + " MB";
+            // document.querySelector("#userAvail").innerHTML = userAvail.toString() + " MB";
         } else {
-            document.querySelector("#anonAvail").innerHTML = "error";
-            document.querySelector("#userAvail").innerHTML = "error";
+            document.querySelector("#spaceAvailable").innerHTML = "error";
+            // document.querySelector("#userAvail").innerHTML = "error";
         }
     }).catch(err => {
-        document.querySelector("#anonAvail").innerHTML = "error";
-        document.querySelector("#userAvail").innerHTML = "error";
+        document.querySelector("#spaceAvailable").innerHTML = "error";
+        // document.querySelector("#userAvail").innerHTML = "error";
     });
 }
 
