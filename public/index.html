@@ -16,16 +16,12 @@
                 Bacryptup is an end-to-end encrypted file sharing service
             </p>
             <p>
-                You can upload files either anonymously (limit 10MB per file) or with an access token (limit 100MB per
-                file) <br />
-                If you have an access token, your total limit is 200MB "storage" <br />
-                Files uploaded are deleted after a set time in the free plans (paid plans tba)
+                You can upload files either anonymously (limit 25MB per file)
+                Files uploaded are deleted after a set time
             </p>
             <p>
                 Steps to upload:
                 <ul>
-                    <li>Choose anonymous or with an access token</li>
-                    <li>Enter access token if applicable</li>
                     <li>Enter password to encrypt with (IMP: If you forget this, you will not be able to decrypt your file)</li>
                     <li>Choose the file to upload (max sure it is in the size limit)</li>
                     <li>Click upload!</li>
@@ -34,22 +30,17 @@
                 There is no "link" to share files - this is intentional. Additionally, it is recommended to communicate the FileID and password over seprate channels.
             </p>
             <ul>
-                <li>Anonymous files are deleted within 1 hour as of now</li>
-                <li>"User" files (uploaded with an access token) are deleted after 24 hours</li>
-                <li>"User" files may be explicitly deleted by the uploader before 24 hours, by specifying the FileID AND
-                    access token</li>
+                <li>Anonymous files are deleted within 1 hour or 1 day as of now</li>
             </ul>
             <p>
-                The total combined anonymous storage limit is 2GB (as of now). If this is full, you must wait till files
+                The total combined anonymous storage limit is 1GB (as of now). If this is full, you must wait till files
                 are deleted <br />
-                The total combined free user storage limit is 20GB (as of now). If this is full, you must wait till
-                files are deleted <br />
                 Paid plans with dedicated storage will be announced soon.
             </p>
-            <p>
+            <!-- <p>
                 IMPORTANT: Restrictions are only placed on upload (access token / other plans). The downloader ONLY
                 needs the FileID & Decryption Password, not the access token or anything else.
-            </p>
+            </p> -->
             <p>
                 [click anywhere to close]
             </p>
@@ -108,7 +99,7 @@
                 [click anywhere to close]
             </p>
         </div>
-        <div class="modal-content" id="reqst">
+        <!-- <div class="modal-content" id="reqst">
             <p>
                 Bacryptup is in a beta stage. Functionality is not perfect, and uptime is not guaranteed. You've been
                 warned.
@@ -131,7 +122,7 @@
                     href="https://join.slack.com/t/bacryptup/shared_invite/zt-e3u9lgzo-1HfIDMoFjFUK0kR13QtOBQ">join our
                     Slack</a> and ask for one in #request-token
             </p>
-        </div>
+        </div> -->
         <!-- <div id="delfile" class="modal-content">
             <table>
                 <tr>
@@ -220,9 +211,9 @@
     <div class="container bottom">
         <span class="link" id="ins-link">Instructions</span>
         <a class="nod" href="https://saxrag.com/bacryptup/"><span class="link" id="works-link"> | How</span> |</a>
-        <a class="nod" href="https://saxrag.com/bacryptup/"><span class="link" id="why-link">Why</span> |</a>
-        <span class="link" id="request-link">Request Token</span> |
-        <span class="link" id="del-link">Delete</span>
+        <a class="nod" href="https://saxrag.com/bacryptup/"><span class="link" id="why-link">Why</span></a>
+        <!-- <span class="link" id="request-link">Request Token</span> |
+        <span class="link" id="del-link">Delete</span> -->
     </div>
     <script src="bundle.js"></script>
     <script src="functions.js"></script>

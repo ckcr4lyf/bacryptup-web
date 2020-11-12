@@ -28,21 +28,21 @@ tabs.push(instructions);
 
 // tabs.push(why);
 
-var reqst = {
-    element: document.getElementById("reqst"),
-    name: "reqst",
-    span: document.getElementById("request-link")
-};
+// var reqst = {
+//     element: document.getElementById("reqst"),
+//     name: "reqst",
+//     span: document.getElementById("request-link")
+// };
 
-tabs.push(reqst);
+// tabs.push(reqst);
 
-var del = {
-    element: document.getElementById("delfile"),
-    name: "delfile",
-    span: document.getElementById("del-link")
-};
+// var del = {
+//     element: document.getElementById("delfile"),
+//     name: "delfile",
+//     span: document.getElementById("del-link")
+// };
 
-tabs.push(del);
+// tabs.push(del);
 
 var ins_link = document.getElementById("ins-link");
 var works_link = document.getElementById("works-link");
